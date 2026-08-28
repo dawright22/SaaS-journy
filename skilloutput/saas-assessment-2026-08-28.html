@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SaaS Readiness Assessment - vitaviva/compose-weather</title>
+  <script>
+    (() => {
+      const param = new URLSearchParams(window.location.search).get("scoutTheme");
+      const theme =
+        param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --cp-bg: #f7f4ef;
+      --cp-bg-elevated: #fcfbf8;
+      --cp-surface: #ffffff;
+      --cp-surface-soft: #f5f5f5;
+      --cp-border: #dedede;
+      --cp-border-strong: #919191;
+      --cp-text: #242424;
+      --cp-text-muted: #5c5c5c;
+      --cp-text-soft: #6f6f6f;
+      --cp-accent: #b11f4b;
+      --cp-accent-hover: #9a1a41;
+      --cp-accent-soft: rgba(177, 31, 75, 0.08);
+      --cp-accent-fg: #ffffff;
+      --cp-success: #16a34a;
+      --cp-danger: #dc2626;
+      --cp-warning: #f59e0b;
+      --cp-link: #0078d4;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+      --cp-overlay: rgba(255, 255, 255, 0.8);
+      --cp-panel: rgba(255, 255, 255, 0.86);
+      --cp-panel-strong: rgba(255, 255, 255, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.55);
+      --cp-highlight: rgba(177, 31, 75, 0.12);
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --cp-bg: #3d3b3a;
+      --cp-bg-elevated: #343231;
+      --cp-surface: #292929;
+      --cp-surface-soft: #2e2e2e;
+      --cp-border: #474747;
+      --cp-border-strong: #5f5f5f;
+      --cp-text: #dedede;
+      --cp-text-muted: #919191;
+      --cp-text-soft: #b0b0b0;
+      --cp-accent: #fd8ea1;
+      --cp-accent-hover: #fb7b91;
+      --cp-accent-soft: rgba(253, 142, 161, 0.14);
+      --cp-accent-fg: #1a1a1a;
+      --cp-success: #4ade80;
+      --cp-danger: #f87171;
+      --cp-warning: #fbbf24;
+      --cp-link: #4da6ff;
+      --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+      --cp-overlay: rgba(41, 41, 41, 0.88);
+      --cp-panel: rgba(41, 41, 41, 0.72);
+      --cp-panel-strong: rgba(41, 41, 41, 0.96);
+      --cp-sheen: rgba(255, 255, 255, 0.04);
+      --cp-highlight: rgba(253, 142, 161, 0.12);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--cp-bg);
+      color: var(--cp-text);
+      font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    main { max-width: 1120px; margin: 0 auto; padding: 32px; }
+    .cover {
+      min-height: 88vh;
+      display: grid;
+      align-content: center;
+      border-top: 8px solid var(--cp-accent);
+      padding: 64px 0;
+    }
+    .eyebrow { color: var(--cp-accent); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { font-size: clamp(42px, 7vw, 76px); line-height: 1.02; margin: 16px 0 24px; max-width: 900px; }
+    h2 { font-size: 30px; margin: 0 0 20px; border-bottom: 2px solid var(--cp-border); padding-bottom: 10px; }
+    h3 { font-size: 20px; margin: 24px 0 12px; }
+    p { margin: 8px 0 16px; }
+    a { color: var(--cp-link); }
+    code {
+      font-family: Consolas, "Courier New", Courier, monospace;
+      background: var(--cp-surface-soft);
+      border: 1px solid var(--cp-border);
+      border-radius: 0.625rem;
+      padding: 2px 5px;
+      overflow-wrap: anywhere;
+    }
+    .meta { color: var(--cp-text-muted); font-size: 17px; }
+    .score-ring {
+      width: 176px;
+      height: 176px;
+      border-radius: 50%;
+      border: 14px solid var(--cp-accent);
+      display: grid;
+      place-content: center;
+      margin: 36px 0;
+      background: var(--cp-surface);
+    }
+    .score-ring strong { display: block; font-size: 48px; line-height: 1; text-align: center; }
+    .score-ring span { color: var(--cp-text-muted); text-align: center; }
+    .banner {
+      background: var(--cp-accent-soft);
+      border-left: 5px solid var(--cp-accent);
+      padding: 16px 20px;
+      border-radius: 0.625rem;
+      margin: 20px 0;
+    }
+    section { margin: 48px 0; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .card {
+      background: var(--cp-surface);
+      border: 1px solid var(--cp-border);
+      border-radius: 16px;
+      box-shadow: 0 0 2px var(--cp-border), 0 1px 2px var(--cp-border);
+      padding: 20px;
+    }
+    .card h3 { margin-top: 0; }
+    .metric { font-size: 34px; font-weight: 700; color: var(--cp-accent); }
+    .muted { color: var(--cp-text-muted); }
+    .critical { color: var(--cp-danger); font-weight: 700; }
+    .high { color: var(--cp-warning); font-weight: 700; }
+    .good { color: var(--cp-success); font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0 24px; font-size: 13px; }
+    th, td { border: 1px solid var(--cp-border); padding: 9px 10px; text-align: left; vertical-align: top; }
+    th { background: var(--cp-surface-soft); }
+    tr:nth-child(even) td { background: var(--cp-bg-elevated); }
+    ul, ol { padding-left: 22px; }
+    li { margin: 6px 0; }
+    .bar { height: 10px; background: var(--cp-surface-soft); border-radius: 0.625rem; overflow: hidden; border: 1px solid var(--cp-border); }
+    .bar span { display: block; height: 100%; background: var(--cp-accent); }
+    .radar { display: grid; place-content: center; min-height: 330px; }
+    .radar svg { width: 320px; max-width: 100%; height: auto; }
+    .radar-grid { fill: none; stroke: var(--cp-border-strong); stroke-width: 1; }
+    .radar-axis { stroke: var(--cp-border); stroke-width: 1; }
+    .radar-data { fill: var(--cp-accent-soft); stroke: var(--cp-accent); stroke-width: 3; }
+    .radar text { fill: var(--cp-text); font-size: 11px; font-family: "Segoe UI", Aptos, Calibri, sans-serif; }
+    .toc a { display: inline-block; margin: 4px 14px 4px 0; }
+    .print {
+      position: fixed; right: 20px; bottom: 20px; border: 0; border-radius: 0.625rem;
+      padding: 12px 18px; background: var(--cp-accent); color: var(--cp-accent-fg);
+      font: inherit; font-weight: 700; cursor: pointer;
+    }
+    .print:hover { background: var(--cp-accent-hover); }
+    .small { font-size: 12px; }
+    @media (max-width: 760px) {
+      main { padding: 20px; }
+      .grid, .grid-3 { grid-template-columns: 1fr; }
+      table { display: block; overflow-x: auto; }
+    }
+    @media print {
+      body { font-size: 11pt; color: #000; background: #fff; }
+      .no-print { display: none; }
+      h1, h2, h3 { page-break-after: avoid; }
+      table, figure, .card { page-break-inside: avoid; }
+      .page-break { page-break-before: always; }
+      @page { margin: 0.75in; size: letter; }
+      @page :first { margin-top: 0; } /* Cover page */
+      main { max-width: none; padding: 0; }
+      .cover { min-height: 9in; }
+      section { margin: 28px 0; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <button class="print no-print" onclick="window.print()">Print / Save PDF</button>
+  <main>
+    <header class="cover">
+      <div class="eyebrow">SaaS Readiness Assessment</div>
+      <h1>vitaviva/<br>compose-weather</h1>
+      <p class="meta">Assessment date: 28 August 2026<br>Assessor: Git-Ape / GitHub Copilot<br>Commit: <code>f05674aed9b461f7a8ea9a067a244064cbfa3c53</code></p>
+      <div class="score-ring"><strong>24</strong><span>out of 100</span></div>
+      <div class="banner"><strong>Classification: Not SaaS-ready.</strong> The repository is a device-local Android Jetpack Compose demonstration using static mock data. It contains no cloud service, tenant boundary, Azure infrastructure, identity plane, billing integration, or production operations model.</div>
+    </header>
+
+    <nav class="toc no-print">
+      <strong>Contents:</strong>
+      <a href="#executive">Executive summary</a><a href="#waf">WAF</a><a href="#caf">CAF</a>
+      <a href="#maturity">SaaS maturity</a><a href="#compliance">Compliance</a>
+      <a href="#security">Security</a><a href="#sre">SRE</a><a href="#cost">Cost</a>
+      <a href="#plan">Action plan</a><a href="#appendix">Appendix</a>
+    </nav>
+
+    <section id="executive" class="page-break">
+      <h2>1. Executive Summary</h2>
+      <div class="grid-3">
+        <div class="card"><div class="metric">24/100</div><strong>Composite readiness</strong><p class="muted">Evidence-weighted score for conversion into a production multi-tenant SaaS.</p></div>
+        <div class="card"><div class="metric">0</div><strong>Azure resources</strong><p class="muted">No ARM, Bicep, Terraform, Azure deployment configuration, or hosted workload was found.</p></div>
+        <div class="card"><div class="metric">1.4/5</div><strong>WAF average</strong><p class="muted">Operational CI is the main positive signal; cloud pillars are otherwise unevidenced.</p></div>
+      </div>
+      <h3>Composite calculation</h3>
+      <table>
+        <thead><tr><th>Category</th><th>Score</th><th>Weight</th><th>Contribution</th></tr></thead>
+        <tbody>
+          <tr><td>Azure Well-Architected</td><td>28/100</td><td>25%</td><td>7</td></tr>
+          <tr><td>Azure CAF</td><td>20/100</td><td>10%</td><td>2</td></tr>
+          <tr><td>SaaS maturity</td><td>20/100</td><td>20%</td><td>4</td></tr>
+          <tr><td>Regulatory readiness</td><td>20/100</td><td>25%</td><td>5</td></tr>
+          <tr><td>SRE readiness</td><td>20/100</td><td>10%</td><td>2</td></tr>
+          <tr><td>Cost management</td><td>40/100</td><td>10%</td><td>4</td></tr>
+          <tr><th colspan="3">Weighted total</th><th>24/100</th></tr>
+        </tbody>
+      </table>
+      <div class="grid">
+        <div class="card">
+          <h3>Top 5 production gaps</h3>
+          <ol>
+            <li><span class="high">High:</span> No server-side product or tenant definition.</li>
+            <li><span class="high">High:</span> No identity, authorization, tenant-context validation, or isolation tests.</li>
+            <li><span class="high">High:</span> No Azure architecture, IaC, governance, or environment promotion model.</li>
+            <li><span class="high">High:</span> Placeholder tests do not validate product behavior.</li>
+            <li><span class="high">High:</span> Obsolete 2021 Android and CI dependencies increase security and maintenance risk.</li>
+          </ol>
+        </div>
+        <div class="card">
+          <h3>Top 5 strengths</h3>
+          <ol>
+            <li>No current cloud attack surface or Azure spend.</li>
+            <li>No Android Internet permission is declared.</li>
+            <li>CI runs formatting, build, lint, and emulator jobs.</li>
+            <li>Accessibility semantics are present in the Compose UI.</li>
+            <li>Unused Android build features are disabled.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="banner"><strong>Decision:</strong> Treat this repository as a UI prototype, not as an assessable SaaS implementation. Before any production claim, define the service architecture and implement an independently secured backend. No Critical finding is assigned to the current offline demo; the High findings become release blockers if SaaS conversion is intended.</div>
+    </section>
+
+    <section id="waf" class="page-break">
+      <h2>2. Azure Well-Architected Scorecard</h2>
+      <div class="grid">
+        <figure class="card radar">
+          <svg viewBox="0 0 300 300" role="img" aria-label="WAF radar chart">
+            <polygon class="radar-grid" points="150,40 255,116 215,239 85,239 45,116"/>
+            <polygon class="radar-grid" points="150,62 234,123 202,221 98,221 66,123"/>
+            <polygon class="radar-grid" points="150,84 213,130 189,204 111,204 87,130"/>
+            <polygon class="radar-grid" points="150,106 192,136 176,186 124,186 108,136"/>
+            <polygon class="radar-grid" points="150,128 171,143 163,168 137,168 129,143"/>
+            <line class="radar-axis" x1="150" y1="150" x2="150" y2="40"/>
+            <line class="radar-axis" x1="150" y1="150" x2="255" y2="116"/>
+            <line class="radar-axis" x1="150" y1="150" x2="215" y2="239"/>
+            <line class="radar-axis" x1="150" y1="150" x2="85" y2="239"/>
+            <line class="radar-axis" x1="150" y1="150" x2="45" y2="116"/>
+            <polygon class="radar-data" points="150,128 171,143 176,186 137,168 108,136"/>
+            <text x="150" y="24" text-anchor="middle">Security 1</text>
+            <text x="260" y="112">Reliability 1</text>
+            <text x="220" y="258">Performance 2</text>
+            <text x="18" y="258">Cost 1</text>
+            <text x="1" y="112">Operations 2</text>
+          </svg>
+        </figure>
+        <div class="card">
+          <h3>Scores and evidence</h3>
+          <p><strong>Security: 1/5</strong></p><div class="bar"><span style="width:20%"></span></div>
+          <p><strong>Reliability: 1/5</strong></p><div class="bar"><span style="width:20%"></span></div>
+          <p><strong>Performance efficiency: 2/5</strong></p><div class="bar"><span style="width:40%"></span></div>
+          <p><strong>Cost optimization: 1/5</strong></p><div class="bar"><span style="width:20%"></span></div>
+          <p><strong>Operational excellence: 2/5</strong></p><div class="bar"><span style="width:40%"></span></div>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Pillar</th><th>Evidence-based assessment</th><th>Priority improvement</th></tr></thead>
+        <tbody>
+          <tr><td>Security</td><td>No identity, authorization, tenant isolation, secrets management, or backend. <code>AndroidManifest.xml:13-35</code></td><td>Threat model and server-validated tenant identity.</td></tr>
+          <tr><td>Reliability</td><td>No SLO, resilience, backup, DR, health model, or meaningful assertions. <code>ExampleUnitTest.kt:18-25</code></td><td>Define service objectives and failure-mode tests.</td></tr>
+          <tr><td>Performance</td><td>Local static data avoids network latency, but no profiling or scale evidence. <code>Mock.kt:24-244</code></td><td>Profile mobile UI; load-test any future APIs.</td></tr>
+          <tr><td>Cost</td><td>No current Azure resources or charges; no future unit economics.</td><td>Model cost per tenant and set budgets before provisioning.</td></tr>
+          <tr><td>Operations</td><td>Basic CI exists, but no delivery promotion, observability, runbooks, or IaC. <code>Check.yaml:1-74</code></td><td>Modernize CI and implement repeatable environments.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="caf" class="page-break">
+      <h2>3. Azure CAF Compliance</h2>
+      <table>
+        <thead><tr><th>Area</th><th>Score</th><th>Status</th><th>Evidence / gap</th></tr></thead>
+        <tbody>
+          <tr><td>Landing zones</td><td>1/5</td><td>Not addressed</td><td>No management-group, subscription, environment, or connectivity design.</td></tr>
+          <tr><td>Naming and tagging</td><td>1/5</td><td>Not addressed</td><td>No Azure resource names or mandatory tags exist.</td></tr>
+          <tr><td>Governance and policy</td><td>1/5</td><td>Not addressed</td><td>No Azure Policy or compliance-as-code artifacts.</td></tr>
+          <tr><td>Identity baseline</td><td>1/5</td><td>Not addressed</td><td>No Entra tenant strategy, workload identities, or RBAC model.</td></tr>
+          <tr><td>Environment promotion</td><td>1/5</td><td>Not addressed</td><td>CI builds only on pushes to main; no dev/test/prod deployment flow.</td></tr>
+        </tbody>
+      </table>
+      <p><strong>CAF score: 1/5.</strong> If SaaS conversion proceeds, establish a minimal platform/workload subscription model, policy baseline, managed identities, resource naming, budgets, and Bicep-managed dev/test/prod environments.</p>
+    </section>
+
+    <section id="maturity">
+      <h2>4. SaaS Maturity</h2>
+      <table>
+        <thead><tr><th>Capability</th><th>Score</th><th>Assessment</th><th>Required evidence</th></tr></thead>
+        <tbody>
+          <tr><td>Tenant definition and isolation</td><td>1/5</td><td>No tenant concept or server-side boundary.</td><td>Tenancy ADR; compute/data/identity/network isolation map; escape tests.</td></tr>
+          <tr><td>Tenant lifecycle</td><td>1/5</td><td>No signup, provisioning, entitlement, migration, or deletion workflow.</td><td>Idempotent lifecycle state machine and reconciliation jobs.</td></tr>
+          <tr><td>Fulfillment and metering</td><td>1/5</td><td>No marketplace events, usage dimensions, or reconciliation.</td><td>Fulfillment API integration and auditable meter event schema.</td></tr>
+          <tr><td>Marketplace readiness</td><td>1/5</td><td>No offer, plans, pricing, legal artifacts, or certification evidence.</td><td>Partner Center checklist and private-preview gate.</td></tr>
+          <tr><td>Deployment topology</td><td>1/5</td><td>No backend topology, deployment stamps, placement, or rollback strategy.</td><td>Versioned IaC, dependency graph, capacity and migration policy.</td></tr>
+        </tbody>
+      </table>
+      <div class="banner"><strong>Recommended starting model:</strong> For a new service, begin with shared compute and logically isolated data only after tenant context is derived from authenticated identity and enforced at every data operation. Use deployment stamps when tenant density, regional residency, or blast-radius limits require them.</div>
+    </section>
+
+    <section id="compliance" class="page-break">
+      <h2>5. Regulatory Compliance Matrix</h2>
+      <p class="muted">This is a repository evidence review, not a certification or audit opinion. Azure-specific controls are not applicable to the current offline app; they remain unimplemented requirements for a future SaaS service.</p>
+      <table>
+        <thead><tr><th>Control ID</th><th>Description</th><th>NIST</th><th>CIS</th><th>PCI</th><th>HIPAA</th><th>SOC 2</th><th>FedRAMP</th><th>Status</th><th>Evidence</th></tr></thead>
+        <tbody>
+          <tr><td>ID-01</td><td>Authenticated identities and least privilege</td><td>AC, IA</td><td>IAM</td><td>7, 8</td><td>Access</td><td>CC6</td><td>AC, IA</td><td>Not implemented</td><td>No auth or RBAC code.</td></tr>
+          <tr><td>ISO-01</td><td>Tenant authorization and cross-tenant isolation</td><td>AC-3, SC-2</td><td>IAM</td><td>7</td><td>Access</td><td>CC6</td><td>AC-3</td><td>Not implemented</td><td>No tenant model.</td></tr>
+          <tr><td>ENC-01</td><td>Encryption in transit and at rest</td><td>SC-8, SC-13</td><td>Storage</td><td>3, 4</td><td>Security</td><td>CC6</td><td>SC-8, SC-13</td><td>Not assessable</td><td>No stored or transmitted service data.</td></tr>
+          <tr><td>LOG-01</td><td>Audit logging and monitoring</td><td>AU-2, AU-6</td><td>Logging</td><td>10</td><td>Audit</td><td>CC7</td><td>AU</td><td>Not implemented</td><td>No backend telemetry.</td></tr>
+          <tr><td>VUL-01</td><td>Vulnerability and dependency management</td><td>RA-5, SI-2</td><td>Compute</td><td>6, 11</td><td>Risk</td><td>CC7</td><td>RA-5</td><td>Weak</td><td>Obsolete dependencies; no dependency scanner.</td></tr>
+          <tr><td>BCP-01</td><td>Backup, recovery, and continuity</td><td>CP-9, CP-10</td><td>Backup</td><td>12</td><td>Contingency</td><td>A1</td><td>CP</td><td>Not implemented</td><td>No service or recovery plan.</td></tr>
+          <tr><td>IR-01</td><td>Incident response</td><td>IR family</td><td>Logging</td><td>12</td><td>Breach</td><td>CC7</td><td>IR</td><td>Not implemented</td><td>No runbooks or escalation model.</td></tr>
+          <tr><td>SDLC-01</td><td>Secure change and release controls</td><td>CM-3, SA-11</td><td>Governance</td><td>6</td><td>Integrity</td><td>CC8</td><td>CM, SA</td><td>Minimal</td><td>Build CI exists; no PR gate, SAST, SBOM, or release signing evidence.</td></tr>
+          <tr><td>PRV-01</td><td>Privacy, retention, and deletion</td><td>SI, PT</td><td>Governance</td><td>3</td><td>Privacy</td><td>P series</td><td>SI</td><td>Not implemented</td><td>No production data classification or lifecycle.</td></tr>
+          <tr><td>GOV-01</td><td>Policy, ownership, and evidence retention</td><td>PM, PL</td><td>Governance</td><td>12</td><td>Policy</td><td>CC1-CC5</td><td>PL, PM</td><td>Not implemented</td><td>No control ownership or policy artifacts.</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>Framework</th><th>Score</th><th>Readiness statement</th></tr></thead>
+        <tbody>
+          <tr><td>CIS Azure Foundations v2.1</td><td>1/5</td><td>No Azure scope exists; no Azure hardening evidence.</td></tr>
+          <tr><td>NIST 800-53 Rev 5 Moderate</td><td>1/5</td><td>Technical and administrative control evidence is absent.</td></tr>
+          <tr><td>PCI DSS v4.0</td><td>1/5</td><td>No CDE is identified; do not introduce payment data without scope design.</td></tr>
+          <tr><td>HIPAA / HITRUST</td><td>1/5</td><td>No PHI claim, BAA, risk analysis, or safeguard evidence.</td></tr>
+          <tr><td>SOC 2 Type II</td><td>1/5</td><td>No operating-effectiveness evidence period or control ownership.</td></tr>
+          <tr><td>FedRAMP Moderate</td><td>1/5</td><td>No authorization boundary, SSP, FIPS evidence, POA&amp;M, or continuous monitoring.</td></tr>
+          <tr><td>ISO 27001:2022</td><td>1/5</td><td>No ISMS scope, risk treatment, Statement of Applicability, or audit evidence.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="security">
+      <h2>6. Security Deep-Dive</h2>
+      <h3>Verified current-state controls</h3>
+      <table>
+        <thead><tr><th>Control</th><th>Status</th><th>Evidence</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr><td>Network access</td><td class="good">Limited</td><td><code>AndroidManifest.xml:13-35</code> has no Internet permission.</td><td>The demo has no declared network access; this is not evidence of SaaS API security.</td></tr>
+          <tr><td>Debug signing separation</td><td class="good">Applied for debug</td><td><code>app/build.gradle:19-32</code></td><td>Bundled debug credentials are scoped to debug builds; production signing is undefined.</td></tr>
+          <tr><td>Device backup</td><td class="high">Review required</td><td><code>AndroidManifest.xml:17</code> sets <code>allowBackup="true"</code>.</td><td>Define extraction/backup rules before storing tokens or customer data.</td></tr>
+          <tr><td>Release hardening</td><td class="high">Not applied</td><td><code>app/build.gradle:33-36</code> sets <code>minifyEnabled false</code>.</td><td>Enable and test R8 for production releases.</td></tr>
+          <tr><td>Supply chain</td><td class="high">Weak</td><td>Old Gradle, Compose, Kotlin, JCenter, and v1/v2 GitHub Actions.</td><td>Upgrade, pin actions by SHA, scan dependencies, and produce an SBOM.</td></tr>
+        </tbody>
+      </table>
+      <h3>Future tenant threat model</h3>
+      <table>
+        <thead><tr><th>Threat</th><th>Required control</th><th>Required test</th></tr></thead>
+        <tbody>
+          <tr><td>Client supplies another tenant's identifier</td><td>Derive tenant context from authenticated claims and server-side membership.</td><td>Horizontal privilege-escalation tests on every tenant-scoped API.</td></tr>
+          <tr><td>Cross-tenant data query or cache collision</td><td>Mandatory tenant partition key and repository-layer policy.</td><td>Negative tests across database, cache, search, export, and logs.</td></tr>
+          <tr><td>Asynchronous context loss</td><td>Signed/internal tenant metadata on messages; authorize again at consumption.</td><td>Poisoned-message and tenant-substitution tests.</td></tr>
+          <tr><td>Mobile secret extraction</td><td>No service credentials in APK; OAuth authorization code with PKCE.</td><td>APK secret scan and token replay tests.</td></tr>
+          <tr><td>Privileged support access</td><td>JIT access, audited impersonation, approval, and scoped break-glass.</td><td>Privilege boundary and immutable audit-log tests.</td></tr>
+        </tbody>
+      </table>
+      <p><strong>IaC security and Azure Policy:</strong> Not applicable to current state. No Azure resource definitions exist, so no Azure security property can be marked Applied, no policy definition can be mapped to a resource, and no policy assignment coverage can be inferred. Subscription state was not queried because no target subscription was supplied.</p>
+    </section>
+
+    <section id="sre" class="page-break">
+      <h2>7. SRE Readiness</h2>
+      <table>
+        <thead><tr><th>Area</th><th>Score</th><th>Current evidence</th><th>Production baseline</th></tr></thead>
+        <tbody>
+          <tr><td>SLO / SLI</td><td>1/5</td><td>None.</td><td>Availability, latency, correctness, freshness, and tenant-level objectives.</td></tr>
+          <tr><td>Observability</td><td>1/5</td><td>Build reports only.</td><td>Correlated metrics, logs, traces, audit events, synthetic tests, and alert ownership.</td></tr>
+          <tr><td>Autoscaling / capacity</td><td>1/5</td><td>No service workload.</td><td>Stamp capacity, tenant density, scale triggers, quotas, and load tests.</td></tr>
+          <tr><td>DR / backups</td><td>1/5</td><td>No service data or recovery design.</td><td>RTO/RPO, backups, restore tests, regional evacuation, and data reconciliation.</td></tr>
+          <tr><td>Noisy-neighbor controls</td><td>1/5</td><td>No shared platform.</td><td>Per-tenant throttles, concurrency limits, queue isolation, and attribution.</td></tr>
+          <tr><td>Delivery operations</td><td>2/5</td><td>Build and emulator workflow on main.</td><td>PR gates, signed releases, progressive delivery, rollback, runbooks, and ownership.</td></tr>
+        </tbody>
+      </table>
+      <p><strong>SRE score: 1/5.</strong> The current CI workflow is useful prototype hygiene but does not demonstrate service reliability.</p>
+    </section>
+
+    <section id="cost">
+      <h2>8. Cost Analysis</h2>
+      <div class="grid">
+        <div class="card"><div class="metric">$0</div><strong>Current Azure monthly estimate</strong><p class="muted">No Azure resources were found. This is an evidence statement, not an Azure Retail Prices API estimate.</p></div>
+        <div class="card"><div class="metric">Unknown</div><strong>Future SaaS cost</strong><p class="muted">No region, SKU, traffic, storage, retention, availability, or tenant-density assumptions are defined.</p></div>
+      </div>
+      <h3>Cost controls required before architecture approval</h3>
+      <ul>
+        <li>Define workload units: monthly active tenants, requests, weather-provider calls, storage, telemetry, and egress.</li>
+        <li>Model shared versus siloed tenant resources and deployment-stamp density.</li>
+        <li>Estimate verified retail prices only after resource types, SKUs, regions, and quantities are chosen.</li>
+        <li>Implement mandatory tags, budgets, anomaly alerts, showback, and cost-per-tenant telemetry.</li>
+        <li>Set log retention and sampling deliberately; observability is often a material variable cost.</li>
+      </ul>
+      <p class="small">No prices were fabricated or queried because the repository contains no Azure billable resource configuration.</p>
+    </section>
+
+    <section id="plan" class="page-break">
+      <h2>9. 30 / 60 / 90 Day Action Plan</h2>
+      <table>
+        <thead><tr><th>Window</th><th>Priority</th><th>Action</th><th>Owner</th><th>Effort</th><th>Exit evidence</th></tr></thead>
+        <tbody>
+          <tr><td>0-30</td><td class="high">High</td><td>Define product, tenant, data classification, compliance scope, SLO, RTO/RPO, scale, and budget requirements.</td><td>Product + Architecture</td><td>M</td><td>Approved requirements and tenancy ADR.</td></tr>
+          <tr><td>0-30</td><td class="high">High</td><td>Upgrade Android, Kotlin, Compose, Gradle, target SDK, repositories, and CI actions.</td><td>Mobile</td><td>M</td><td>Supported versions, PR build, dependency scan, SBOM.</td></tr>
+          <tr><td>0-30</td><td class="high">High</td><td>Replace placeholder tests and enable release shrinking plus secure backup rules.</td><td>Mobile + Security</td><td>M</td><td>Behavioral tests and hardened release build.</td></tr>
+          <tr><td>31-60</td><td class="high">High</td><td>Build an identity-aware API using managed identities and Key Vault; keep credentials out of the app.</td><td>Platform</td><td>L</td><td>Threat-modeled API and auth integration tests.</td></tr>
+          <tr><td>31-60</td><td class="high">High</td><td>Implement Bicep-managed dev/test/prod landing zones, policy, tags, budgets, and observability.</td><td>Cloud Platform</td><td>L</td><td>Reviewed IaC and successful non-production deployment.</td></tr>
+          <tr><td>31-60</td><td class="high">High</td><td>Implement tenant partitioning, lifecycle state machine, entitlements, and reconciliation.</td><td>SaaS Platform</td><td>L</td><td>Cross-tenant negative tests and lifecycle tests.</td></tr>
+          <tr><td>61-90</td><td>Medium</td><td>Load-test tenant density, throttling, autoscaling, and failure domains.</td><td>SRE</td><td>M</td><td>Capacity limits and scaling runbooks.</td></tr>
+          <tr><td>61-90</td><td>Medium</td><td>Test backups, restore, rollback, incident response, and regional recovery where justified.</td><td>SRE + Security</td><td>L</td><td>Exercise results meeting RTO/RPO.</td></tr>
+          <tr><td>61-90</td><td>Medium</td><td>Design Marketplace offer, fulfillment, metering, and financial reconciliation if commercialization requires it.</td><td>Commercial + Platform</td><td>L</td><td>Private-preview launch gate.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="appendix" class="page-break">
+      <h2>10. Appendix</h2>
+      <h3>Full findings register</h3>
+      <table>
+        <thead><tr><th>ID</th><th>Severity</th><th>Finding</th><th>Evidence</th><th>Timeline</th></tr></thead>
+        <tbody>
+          <tr><td>F-01</td><td class="high">High</td><td>No SaaS service, identity, authorization, or tenant boundary.</td><td><code>AndroidManifest.xml:13-35</code>; <code>Mock.kt:24-244</code></td><td>Before SaaS build</td></tr>
+          <tr><td>F-02</td><td class="high">High</td><td>No Azure IaC, governance, security, policy, or deployment topology.</td><td>Repository inventory</td><td>Before cloud deploy</td></tr>
+          <tr><td>F-03</td><td class="high">High</td><td>Obsolete and prerelease toolchain components.</td><td><code>build.gradle:18-34</code>; <code>app/build.gradle:67-80</code></td><td>30 days</td></tr>
+          <tr><td>F-04</td><td class="high">High</td><td>Tests are placeholders without meaningful assertions.</td><td><code>ExampleUnitTest.kt:18-25</code>; <code>ExampleInstrumentedTest.kt:24-37</code></td><td>30 days</td></tr>
+          <tr><td>F-05</td><td>Medium</td><td>Application backup is enabled without explicit production data rules.</td><td><code>AndroidManifest.xml:17</code></td><td>60 days</td></tr>
+          <tr><td>F-06</td><td>Medium</td><td>Release minification is disabled.</td><td><code>app/build.gradle:33-36</code></td><td>60 days</td></tr>
+          <tr><td>F-07</td><td>Medium</td><td>CI actions are obsolete and workflow is push-only.</td><td><code>Check.yaml:3-7,14-29,50-71</code></td><td>60 days</td></tr>
+          <tr><td>F-08</td><td>Medium</td><td>No mobile performance profiling despite continuous animation and fixed large widths.</td><td><code>WeatherView.kt:140-143,268-285,458-468</code></td><td>90 days</td></tr>
+          <tr><td>F-09</td><td>Low</td><td>Bundled standard debug keystore must remain non-production only.</td><td><code>app/build.gradle:19-32</code></td><td>Backlog guardrail</td></tr>
+        </tbody>
+      </table>
+      <h3>Repository inventory</h3>
+      <ul>
+        <li>Application: Kotlin Android app, Jetpack Compose beta-era toolchain.</li>
+        <li>Data: static, in-process mock weather values.</li>
+        <li>Infrastructure: none found (no ARM, Bicep, Terraform, Dockerfile, or Azure deployment artifacts).</li>
+        <li>CI/CD: one GitHub Actions workflow for build, lint, and emulator tests.</li>
+        <li>Existing SaaS assessment artifacts: none found.</li>
+      </ul>
+      <h3>Methodology and limitations</h3>
+      <p>The assessment used repository evidence at the stated commit and the 1-5 rubric defined by the SaaS Assessment Report workflow. The composite score weights WAF 25%, CAF 10%, SaaS maturity 20%, regulatory readiness 25%, SRE 10%, and cost 10%. Missing evidence is scored as not addressed; it is not treated as proof of absence outside the repository.</p>
+      <p>No Azure subscription, deployed resources, runtime telemetry, penetration-test results, organizational policies, contracts, or operating records were supplied. Consequently, Azure Policy, live compliance, security posture, and pricing could not be verified. Framework mappings are readiness indicators, not certifications, legal advice, or an attestation of compliance.</p>
+      <p class="small">Generated as a self-contained HTML report using the Clawpilot theme. Source repository: <a href="https://github.com/vitaviva/compose-weather">github.com/vitaviva/compose-weather</a>.</p>
+    </section>
+  </main>
+</body>
+</html>
